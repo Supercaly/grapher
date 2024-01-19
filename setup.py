@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='Grapher',
-      version='1.0',
+      version='1.1',
       description='Program to auto create graphs form InfluxDB data',
       author='Lorenzo Calisti',
       author_email='l.calisti@campus.uniurb.it',
