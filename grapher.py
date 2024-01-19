@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
 import argparse as arg
+import pandas as pd
 
 ap = arg.ArgumentParser(description='''
                         Create automatically plots from data stored inside InfluxDB. 
@@ -36,6 +37,14 @@ ap.add_argument("-o", "--outdir",
                 type=str,
                 default=".",
                 help="path to the folder where the produced graphs are stored")
+ap.add_argument("-s", "--save-highlights",
+                action='store_true',
+                default=False,
+                help="save to a file the highlighted hours and their values")
+ap.add_argument("--highlights-file",
+                type=str,
+                default="highlights.txt",
+                help="name of the file where the highlighted hours are saved")
 ap.add_argument("--dry-run",
                 action='store_true',
                 default=False,
@@ -57,6 +66,9 @@ print(f"using time highlights: {[e.strftime(TIME_FMT) for e in time_highlights]}
 if not args.dry_run and not os.path.exists(args.outdir):
     print(f"creating output dir '{args.outdir}'")
     os.makedirs(args.outdir, exist_ok=True)
+
+# create dictionary for storing highlighted data
+highlights_data_dict = {}
 
 ##########################################
 # parse csv file to extract relevant data
@@ -177,6 +189,9 @@ for chart_data in grouped_data:
     y_highlight = [f for i, f in enumerate(values) if i in idxs_highlight]
     ax.plot(x_highlight, y_highlight,'r',x_highlight, y_highlight,'ro')
 
+    # append the values of highlighted times for this graph
+    highlights_data_dict[f"{field}_{host}"] = {k:v for (k,v) in zip(labels_highlight, y_highlight)}
+
     # add highlights annotations
     for label,x,y in zip(labels_highlight,x_highlight,y_highlight):
         plt.annotate(label, # this is the text
@@ -195,3 +210,14 @@ for chart_data in grouped_data:
     else:
         plt.show()
     # break
+
+#############################################
+# store the highlighted values as a csv file
+#############################################
+df = pd.DataFrame.from_dict(highlights_data_dict)
+if args.save_highlights:
+    if not args.dry_run:
+        df.to_string(os.path.join(args.outdir, args.highlights_file))
+        print(f"saved highlighted data to '{args.highlights_file}'")
+    else:
+        print(df.to_string())

@@ -10,6 +10,7 @@ setup(name='Grapher',
       install_requires=[
           'python-dateutil',
           'matplotlib',
-          'numpy'
+          'numpy',
+          'pandas'
       ]
      )
