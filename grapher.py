@@ -23,7 +23,7 @@ ap.add_argument("-t","--highlights",
 ap.add_argument("--title",
                 action='store_true',
                 default=False,
-                help="display the main title in the graph")
+                help="display the main title in the graphs")
 ap.add_argument("--min",
                 type=str,
                 default=None,
@@ -31,7 +31,7 @@ ap.add_argument("--min",
 ap.add_argument("--max",
                 type=str,
                 default=None,
-                help="specify a maximum hour (format HH:MM) to start the graphs")
+                help="specify a maximum hour (format HH:MM) to stop the graphs")
 ap.add_argument("-o", "--outdir",
                 type=str,
                 default=".",
@@ -42,16 +42,16 @@ ap.add_argument("--dry-run",
                 help="perform a dry run showing the graphs to screen without storing anything")
 args = ap.parse_args()
 
-times_highlights = args.highlights
-time_fmt = '%H:%M'
-mytz = tz.gettz("Europe/Rome")
+time_highlights = args.highlights
+TIME_FMT = '%H:%M'
+CURRENT_TZ = tz.gettz("Europe/Rome")
 
 if args.dry_run:
     print("performing dry run")
 
 # get time highlights
-times_highlights = [datetime.strptime(t, time_fmt).time() for t in times_highlights]
-print(f"using time highlights: {[e.strftime(time_fmt) for e in times_highlights]}")
+time_highlights = [datetime.strptime(t, TIME_FMT).time() for t in time_highlights]
+print(f"using time highlights: {[e.strftime(TIME_FMT) for e in time_highlights]}")
 
 # create outdir if not exists
 if not args.dry_run and not os.path.exists(args.outdir):
@@ -91,7 +91,7 @@ while i < len(lines):
     tmp_list.append(split_line[header.index('_field')])
 
     time_string = split_line[header.index('_time')]
-    timestamp = parser.parse(time_string).astimezone(mytz)
+    timestamp = parser.parse(time_string).astimezone(CURRENT_TZ)
     tmp_list.append(timestamp)
     
     tmp_list.append(float(split_line[header.index('_value')]))
@@ -127,13 +127,13 @@ for chart_data in grouped_data:
     
     # get min and max times to plot
     if args.min is not None:
-        min_time = datetime.strptime(args.min, time_fmt).time()
-        min_date = datetime.combine(chart_data[0][2].date(), min_time).astimezone(mytz)
+        min_time = datetime.strptime(args.min, TIME_FMT).time()
+        min_date = datetime.combine(chart_data[0][2].date(), min_time).astimezone(CURRENT_TZ)
     else:
         min_date = min([f[2] for f in chart_data])
     if args.max is not None:
-        max_time = datetime.strptime(args.max, time_fmt).time()
-        max_date = datetime.combine(chart_data[0][2].date(), max_time).astimezone(mytz)
+        max_time = datetime.strptime(args.max, TIME_FMT).time()
+        max_date = datetime.combine(chart_data[0][2].date(), max_time).astimezone(CURRENT_TZ)
     else:
         max_date = max([f[2] for f in chart_data])
 
@@ -147,20 +147,20 @@ for chart_data in grouped_data:
     
     # extract the index of the data to highlight
     current_date = chart_data[0][2].date()
-    highlight_idxs = []
-    highlight_label = []
-    for th in times_highlights:
-        dth = datetime.combine(current_date, th).astimezone(mytz)
+    idxs_highlight = []
+    labels_highlight = []
+    for th in time_highlights:
+        dth = datetime.combine(current_date, th).astimezone(CURRENT_TZ)
         idx = np.argmin(list([abs(d - dth) for d in times]))
         
         if abs(times[idx] - dth) < timedelta(minutes=30):
-            highlight_idxs.append(idx)
-            highlight_label.append(th.strftime(time_fmt))
+            idxs_highlight.append(idx)
+            labels_highlight.append(th.strftime(TIME_FMT))
         else:
-            print(f"skipping time highlight: {th.strftime(time_fmt)}")
-    highlight_idxs.sort()
-    highlight_label.sort()
-    print(f"using approximated time highlights: {[times[e].time().strftime(time_fmt) for e in highlight_idxs]}")
+            print(f"skipping time highlight: {th.strftime(TIME_FMT)}")
+    idxs_highlight.sort()
+    labels_highlight.sort()
+    print(f"using approximated time highlights: {[times[e].time().strftime(TIME_FMT) for e in idxs_highlight]}")
 
     # make the plot   
     fig, ax = plt.subplots(figsize=(8,4.5))
@@ -168,20 +168,17 @@ for chart_data in grouped_data:
     if args.title:
         chart_title = f"{field} - {host} - {room} {loc}"
         plt.title(chart_title)
-    ax.xaxis.set_major_formatter(mdates.DateFormatter(time_fmt,mytz))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter(TIME_FMT,CURRENT_TZ))
 
     ax.plot(times,values)
 
     # plot highlights
-    x_highlight = [f for i, f in enumerate(times) if i in highlight_idxs]
-    y_highlight = [f for i, f in enumerate(values) if i in highlight_idxs]
+    x_highlight = [f for i, f in enumerate(times) if i in idxs_highlight]
+    y_highlight = [f for i, f in enumerate(values) if i in idxs_highlight]
     ax.plot(x_highlight, y_highlight,'r',x_highlight, y_highlight,'ro')
-    
-    # ax.xaxis.set_major_locator(mdates.HourLocator())
-    # ax.xaxis.set_minor_locator(ticker.FixedLocator(x_highlight))
 
     # add highlights annotations
-    for label,x,y in zip(highlight_label,x_highlight,y_highlight):
+    for label,x,y in zip(labels_highlight,x_highlight,y_highlight):
         plt.annotate(label, # this is the text
                     (x,y), # these are the coordinates to position the label
                     textcoords="offset points", # how to position the text
