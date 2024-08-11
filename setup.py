@@ -1,16 +1,19 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 
-setup(name='Grapher',
-      version='1.1',
-      description='Program to auto create graphs form InfluxDB data',
+setup(name='grapher',
+      version='1.2',
+      description='Program that auto creates graphs form InfluxDB data',
       author='Lorenzo Calisti',
       author_email='l.calisti@campus.uniurb.it',
-      scripts=['grapher.py'],
+      packages=find_packages(),
+      entry_points={
+          'console_scripts': ['grapher=grapher.cli:main']
+      },
       license='MIT',
       install_requires=[
-          'python-dateutil',
           'matplotlib',
           'numpy',
-          'pandas'
+          'pandas',
+          'colorlog'
       ]
      )
