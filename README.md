@@ -23,7 +23,7 @@ $ python setup.py install
 After installation the script can be run like any normal command:
 
 ```console
-$ grapher.py --help
+$ grapher --help
 ```
 
 ## Usage
@@ -31,6 +31,6 @@ $ grapher.py --help
 1. Obtain the raw data from InfluxDB as a `.csv` file.
 2. Run the script with custom parameters:
 ```console
-$ grapher.py raw.csv -o out
+$ grapher raw.csv -o out
 ```
 3. Profit (?)
