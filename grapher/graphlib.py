@@ -306,3 +306,35 @@ def get_yaxes_limits(
     use_same_scale: bool,
     margin: float = 0.05
 ):
+    """
+    This function is used to compute y-axies limits for a series of
+    tables grouped by the _field column.
+    The dict has per keys the different unique fields and per values
+    a couple of (botto, top) ranges for the y axes.
+    If 'plot_use_same_scale' is False the values are (None,None) and
+    the library will automatically compute the limits for each plot.
+
+    Args:
+        table (Table): The table.
+        use_same_scale (bool): If True return a dict where the values
+            are paris of min/max values adjusted by a margin; otherwise
+            return None meaning that the limits will be computed
+            automatically when plotting.
+        margin (float): The padding added to each limit of the axes.
+    Returns:
+        dict: The dict with the y-axis limits.
+    """
+    grouped = table.groupby(['_field'])
+    lim_dict = {}
+    for info, value in grouped:
+        if use_same_scale:
+            min_val = value['_value'].min()
+            max_val = value['_value'].max()
+            # add margin to the min and max values as suggested
+            # by [this](https://matplotlib.org/devdocs/api/_as_gen/matplotlib.axes.Axes.margins.html).
+            min_val -= (max_val-min_val)*0.05
+            max_val += (max_val-min_val)*0.05
+            lim_dict[info[0]] = [min_val,max_val]
+        else:
+            lim_dict[info[0]] = None
+    return lim_dict
