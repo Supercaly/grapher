@@ -300,3 +300,9 @@ def _table_stop_datetime(table:Table) -> datetime.datetime:
         datetime: The stop datetime.
     """
     return table['_stop'].iloc[0].to_pydatetime()
+
+def get_yaxes_limits(
+    table: Table,
+    use_same_scale: bool,
+    margin: float = 0.05
+):
